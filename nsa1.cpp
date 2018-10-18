@@ -1,5 +1,3 @@
-#include "nsanode.hpp"
-#include "nsarunner.hpp"
 #include "nsabuilder.hpp"
 
 #include <iostream>
@@ -10,11 +8,8 @@ int main(int argc, char* argv[]) {
 
     auto regex = cat( cat( cat( star( any<char>() ), lit('a') ), alt( lit('b'), lit('c') ) ), accept<char>() );
 
-    NSARunner<char> runner;
-    runner.addStart(regex.start);
-
     for(int i=1; i<argc; ++i) {
-        std::cout << argv[i] << ":\t" << runner.run(argv[i], argv[i]+std::strlen(argv[i])) << std::endl;
+        std::cout << argv[i] << ":\t" << regex.run(argv[i], argv[i]+std::strlen(argv[i])) << std::endl;
     }
 }
 

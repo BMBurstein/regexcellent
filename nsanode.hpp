@@ -7,7 +7,7 @@ template <class T>
 class NSANode;
 
 template <class T>
-using StateCollection = std::vector<NSANode<T> const*>;
+using StateVec = std::vector<NSANode<T> const*>;
 
 template <class T>
 class NSANode {
@@ -20,7 +20,7 @@ public:
 
     virtual bool test(T const&) const { return true;}
 
-    StateCollection<T> out;
+    StateVec<T> out;
 };
 
 template <class T>
