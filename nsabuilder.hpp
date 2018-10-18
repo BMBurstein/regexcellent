@@ -32,3 +32,18 @@ template <class T>
 NSAMachine<T> star(NSAMachine<T> a) {
     return std::move(a.star());
 }
+
+template <class T>
+NSAMachine<T> operator+(NSAMachine<T> a, NSAMachine<T> b) {
+    return cat(std::move(a), std::move(b));
+}
+
+template <class T>
+NSAMachine<T> operator|(NSAMachine<T> a, NSAMachine<T> b) {
+    return alt(std::move(a), std::move(b));
+}
+
+template <class T>
+NSAMachine<T> operator*(NSAMachine<T> a) {
+    return star(std::move(a));
+}
