@@ -69,10 +69,10 @@ public:
 
     template <class InputIt>
     bool run(InputIt begin, InputIt const& end) {
-        std::set<NSANode<T> const*> cur;
+        StateSet cur, next;
         
         next.clear();
-        if(addStates({start})) {
+        if(addStates({start}, next)) {
             return true;
         }
         while(begin != end) {
@@ -80,7 +80,7 @@ public:
             next.clear();
             for(auto const& s: cur) {
                 if(s->test(*begin)) {
-                    if(addStates(s->out)) {
+                    if(addStates(s->out, next)) {
                         return true;
                     }
                 }
@@ -92,9 +92,9 @@ public:
     }
 
 private:
-    std::set<NSANode<T> const*> next;
+    using StateSet = std::set<NSANode<T> const*>;
 
-    bool addStates(StateVec<T> const& states) {
+    static bool addStates(StateVec<T> const& states, StateSet& next) {
         for(auto const& s: states) {
             if(s->accepts) {
                 return true;
@@ -103,7 +103,7 @@ private:
                 next.emplace(s);
             }
             else {
-                if(addStates(s->out)) {
+                if(addStates(s->out, next)) {
                     return true;
                 }
             }
@@ -111,7 +111,6 @@ private:
         return false;
     }
 
-private:
     NSANode<T> const* start;
     std::vector<std::unique_ptr<NSANode<T>>> nodes;
     std::vector<NSANode<T> *> out;
