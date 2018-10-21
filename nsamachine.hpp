@@ -11,61 +11,63 @@ public:
     NSAMachine(NSAMachine const&) = delete;
     NSAMachine(NSAMachine &&) = default;
 
-    NSAMachine(std::unique_ptr<NSANode<T>> node) {
-        out.emplace_back(node.get());
-        start = node.get();
-        nodes.emplace_back(std::move(node));
-    }
+    NSAMachine(NSANode<T> const s, std::vector<std::unique_ptr<NSANode<T>>> v) : start(std::move(s)), nodes(std::move(v)) {}
     
-    NSAMachine& concat(NSAMachine&& m) {
-        nodes.insert(nodes.end(),
-                     std::make_move_iterator(m.nodes.begin()),
-                     std::make_move_iterator(m.nodes.end())
-                    );
-        
-        for(auto& p : out)
-        {
-            p->out.emplace_back(m.start);
-        }
-        
-        out = std::move(m.out);
-
-        return *this;
-    }
+    // NSAMachine(std::unique_ptr<NSANode<T>> node) {
+    //     out.emplace_back(node.get());
+    //     start = node.get();
+    //     nodes.emplace_back(std::move(node));
+    // }
     
-    NSAMachine& alt(NSAMachine&& m) {
-        nodes.insert(nodes.end(),
-                     std::make_move_iterator(m.nodes.begin()),
-                     std::make_move_iterator(m.nodes.end())
-                    );
+    // NSAMachine& concat(NSAMachine&& m) {
+    //     nodes.insert(nodes.end(),
+    //                  std::make_move_iterator(m.nodes.begin()),
+    //                  std::make_move_iterator(m.nodes.end())
+    //                 );
         
-        auto s = std::make_unique<NSASplitNode<T>>();
-        s->out.emplace_back(start);
-        s->out.emplace_back(m.start);
-        start = s.get();
-        nodes.emplace_back(std::move(s));
+    //     for(auto& p : out)
+    //     {
+    //         p->out.emplace_back(m.start);
+    //     }
         
-        out.insert(out.end(), m.out.begin(), m.out.end());
+    //     out = std::move(m.out);
 
-        return *this;
-    }
-
-    NSAMachine& star() {
-        auto s = std::make_unique<NSASplitNode<T>>();
-        s->out.emplace_back(start);
-        start = s.get();
+    //     return *this;
+    // }
+    
+    // NSAMachine& alt(NSAMachine&& m) {
+    //     nodes.insert(nodes.end(),
+    //                  std::make_move_iterator(m.nodes.begin()),
+    //                  std::make_move_iterator(m.nodes.end())
+    //                 );
         
-        for(auto& p : out)
-        {
-            p->out.emplace_back(start);
-        }
-        out.clear();
-        out.emplace_back(s.get());
+    //     auto s = std::make_unique<NSASplitNode<T>>();
+    //     s->out.emplace_back(start);
+    //     s->out.emplace_back(m.start);
+    //     start = s.get();
+    //     nodes.emplace_back(std::move(s));
+        
+    //     out.insert(out.end(), m.out.begin(), m.out.end());
 
-        nodes.emplace_back(std::move(s));
+    //     return *this;
+    // }
 
-        return *this;
-    }
+    // NSAMachine& star() {
+    //     auto s = std::make_unique<NSASplitNode<T>>();
+    //     s->out.emplace_back(start);
+    //     start = s.get();
+        
+    //     for(auto& p : out)
+    //     {
+    //         p->out.emplace_back(start);
+    //     }
+    //     out.clear();
+    //     out.emplace_back(s.get());
+
+    //     nodes.emplace_back(std::move(s));
+
+    //     return *this;
+    // }
 
     template <class InputIt>
     bool run(InputIt begin, InputIt const& end) {
@@ -113,5 +115,4 @@ private:
 
     NSANode<T> const* start;
     std::vector<std::unique_ptr<NSANode<T>>> nodes;
-    std::vector<NSANode<T> *> out;
 };
