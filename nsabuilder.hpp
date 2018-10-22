@@ -8,38 +8,27 @@
 #include <vector>
 
 template <class T>
-class accept;
-
-template <class T>
 class NSABuilder {
 public:
     NSAMachine<T> compile() const {
-        NodeVec v;
+        NodeVec<T> v;
         auto nsa = makeNSA(v);
-        connect(nsa, accept<T>().makeNSA());
+        connect(nsa, makeNSAPart<NSAAcceptNode>(v));
         return {std::move(nsa.start), std::move(v)};
     }
 
     virtual ~NSABuilder() {};
 
 protected:
-    using NodeVec = std::vector<std::unique_ptr<NSANode<T>>>;
-
     struct NSAPart {
         NSANode<T> const* start;
         std::vector<NSANode<T> *> out;
     };
 
     template <template<typename> class Node_T, typename... Args>
-    static typename std::unique_ptr<Node_T<T>>::pointer make_unique(NodeVec& v, Args&&... args) {
+    static NSAPart makeNSAPart(NodeVec<T>& v, Args&&... args) {
         v.emplace_back(std::make_unique<Node_T<T>>(std::forward<Args>(args)...));
         auto p = v.back().get();
-        return p;
-    }
-
-    template <template<typename> class Node_T, typename... Args>
-    static NSAPart makeNSAPart(NodeVec& v, Args&&... args) {
-        auto p = make_unique<Node_T>(std::forward<Args>(args)...);
         return {p, {p}};
     }
 
@@ -49,8 +38,8 @@ protected:
         }
     }
 
-private:
-    virtual NSAPart makeNSA(NodeVec& v) const = 0;
+public:
+    virtual NSAPart makeNSA(NodeVec<T>& v) const = 0;
 };
 
 template <class T>
@@ -60,122 +49,85 @@ public:
 private:
     T val;
 
-    typename NSABuilder<T>::NSAPart makeNSA(typename NSABuilder<T>::NodeVec& v) const override {
+    typename NSABuilder<T>::NSAPart makeNSA(NodeVec<T>& v) const override {
         return NSABuilder<T>::template makeNSAPart<NSACompareNode>(v, val);
     }
 };
 
-// template <class T>
-// NSAMachine<T> lit(T const& l) {
-//     return NSAMachine<T>(std::make_unique<NSACompareNode<T>>(l));
-// }
-
 template <class T>
 class any : public NSABuilder<T> {
 private:
-    typename NSABuilder<T>::NSAPart makeNSA(typename NSABuilder<T>::NodeVec& v) const override {
-        return NSABuilder<T>::template makeNSAPart<NSAAnyNode>();
+    typename NSABuilder<T>::NSAPart makeNSA(NodeVec<T>& v) const override {
+        return NSABuilder<T>::template makeNSAPart<NSAAnyNode>(v);
     }
 };
-
-// template <class T>
-// NSAMachine<T> any() {
-//     return NSAMachine<T>(std::make_unique<NSAAnyNode<T>>());
-// }
-
-template <class T>
-class accept : public NSABuilder<T> {
-private:
-    typename NSABuilder<T>::NSAPart makeNSA(typename NSABuilder<T>::NodeVec& v) const override {
-        return NSABuilder<T>::template makeNSAPart<NSAAcceptNode>();
-    }
-};
-
-// template <class T>
-// NSAMachine<T> accept() {
-//     return NSAMachine<T>(std::make_unique<NSAAcceptNode<T>>());
-// }
 
 template <class T>
 class cat : public NSABuilder<T> {
 public:
-    cat(NSABuilder<T> a, NSABuilder<T> b) : a(std::move(a)), b(std::move(b)) {}
+    cat(NSABuilder<T> const& a, NSABuilder<T> const& b) : a(a), b(b) {}
 
 private:
-    NSABuilder<T> a, b;
+    NSABuilder<T> const& a;
+    NSABuilder<T> const& b;
 
-    typename NSABuilder<T>::NSAPart makeNSA(typename NSABuilder<T>::NodeVec& v) const override {
+    typename NSABuilder<T>::NSAPart makeNSA(NodeVec<T>& v) const override {
         auto part_a = a.makeNSA(v);
         auto part_b = b.makeNSA(v);
-        connect(part_a, part_b);
+        this->connect(part_a, part_b);
         return {std::move(part_a.start), std::move(part_b.out)};
     }
 };
 
-// template <class T>
-// NSAMachine<T> cat(NSAMachine<T> a, NSAMachine<T> b) {
-//     return std::move(a.concat(std::move(b)));
-// }
-
 template <class T>
 class alt : public NSABuilder<T> {
 public:
-    alt(NSABuilder<T> a, NSABuilder<T> b) : a(std::move(a)), b(std::move(b)) {}
+    alt(NSABuilder<T> const& a, NSABuilder<T> const& b) : a(a), b(b) {}
 
 private:
-    NSABuilder<T> a, b;
+    NSABuilder<T> const& a;
+    NSABuilder<T> const& b;
 
-    typename NSABuilder<T>::NSAPart makeNSA(typename NSABuilder<T>::NodeVec& v) const override {
+    typename NSABuilder<T>::NSAPart makeNSA(NodeVec<T>& v) const override {
         auto part_a = a.makeNSA(v);
         auto part_b = b.makeNSA(v);
-        auto s = NSABuilder<T>::template makeNSAPart<NSASplitNode>();
-        connect(s, part_a);
-        connect(s, part_b);
+        auto s = NSABuilder<T>::template makeNSAPart<NSASplitNode>(v);
+        this->connect(s, part_a);
+        this->connect(s, part_b);
         s.out = std::move(part_a.out);
         s.out.insert(s.out.end(), part_b.out.begin(), part_b.out.end());
         return s;
     }
 };
 
-// template <class T>
-// NSAMachine<T> alt(NSAMachine<T> a, NSAMachine<T> b) {
-//     return std::move(a.alt(std::move(b)));
-// }
-
 template <class T>
 class star : public NSABuilder<T> {
 public:
     star(NSABuilder<T> const& a) : a(a) {}
-    star(NSABuilder<T> && a) : a(std::move(a)) {}
 
 private:
-    NSABuilder<T> a;
+    NSABuilder<T> const& a;
 
-    typename NSABuilder<T>::NSAPart makeNSA(typename NSABuilder<T>::NodeVec& v) const override {
+    typename NSABuilder<T>::NSAPart makeNSA(NodeVec<T>& v) const override {
         auto part = a.makeNSA(v);
-        auto s = NSABuilder<T>::template makeNSAPart<NSASplitNode>();
-        connect(s, part);
-        connect(part, s);
+        auto s = NSABuilder<T>::template makeNSAPart<NSASplitNode>(v);
+        this->connect(s, part);
+        this->connect(part, s);
         return s;
     }
 };
 
-// template <class T>
-// NSAMachine<T> star(NSAMachine<T> a) {
-//     return std::move(a.star());
-// }
+template <class T>
+cat<T> operator+(NSABuilder<T> const& a, NSABuilder<T> const& b) {
+    return cat(a, b);
+}
 
-// template <class T>
-// NSABuilder<T> operator+(NSABuilder<T> a, NSABuilder<T> b) {
-//     return cat(std::move(a), std::move(b));
-// }
+template <class T>
+alt<T> operator|(NSABuilder<T> const& a, NSABuilder<T> const& b) {
+    return alt(a, b);
+}
 
-// template <class T>
-// NSABuilder<T> operator|(NSABuilder<T> a, NSABuilder<T> b) {
-//     return alt(std::move(a), std::move(b));
-// }
-
-// template <class T>
-// NSABuilder<T> operator*(NSABuilder<T> a) {
-//     return star(std::move(a));
-// }
+template <class T>
+star<T> operator*(NSABuilder<T> const& a) {
+    return star(a);
+}
