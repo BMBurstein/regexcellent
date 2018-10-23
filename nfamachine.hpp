@@ -1,18 +1,18 @@
-#include "nsanode.hpp"
+#include "nfanode.hpp"
 
 #include <vector>
 #include <memory>
 
 template <class T>
-using NodeVec = std::vector<std::unique_ptr<NSANode<T>>>;
+using NodeVec = std::vector<std::unique_ptr<NFANode<T>>>;
 
 template <class T>
-class NSAMachine {
+class NFAMachine {
 public:
-    NSAMachine(NSAMachine const&) = delete;
-    NSAMachine(NSAMachine &&) = default;
+    NFAMachine(NFAMachine const&) = delete;
+    NFAMachine(NFAMachine &&) = default;
 
-    NSAMachine(NSANode<T> const* s, NodeVec<T> v) : start(std::move(s)), nodes(std::move(v)) {}
+    NFAMachine(NFANode<T> const* s, NodeVec<T> v) : start(std::move(s)), nodes(std::move(v)) {}
 
     template <class InputIt>
     bool run(InputIt begin, InputIt const& end) {
@@ -39,7 +39,7 @@ public:
     }
 
 private:
-    using StateSet = std::set<NSANode<T> const*>;
+    using StateSet = std::set<NFANode<T> const*>;
 
     static bool addStates(StateVec<T> const& states, StateSet& next) {
         for(auto const& s: states) {
@@ -58,6 +58,6 @@ private:
         return false;
     }
 
-    NSANode<T> const* start;
+    NFANode<T> const* start;
     NodeVec<T> nodes;
 };
