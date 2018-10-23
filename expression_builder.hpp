@@ -118,6 +118,25 @@ private:
 };
 
 template <class T>
+class opt : public ExpressionBuilder<T> {
+public:
+    opt(ExpressionBuilder<T> const& a) : a(a) {}
+
+private:
+    ExpressionBuilder<T> const& a;
+
+    typename ExpressionBuilder<T>::NFAPart makeNFA(NodeVec<T>& v) const override {
+        auto part = a.makeNFA(v);
+        auto s = ExpressionBuilder<T>::template makeNFAPart<NFASplitNode>(v);
+        this->connect(s, part);
+        auto p = s.out[0];
+        s.out = std::move(part.out);
+        s.out.emplace_back(p);
+        return s;
+    }
+};
+
+template <class T>
 cat<T> operator+(ExpressionBuilder<T> const& a, ExpressionBuilder<T> const& b) {
     return cat(a, b);
 }
@@ -130,4 +149,9 @@ alt<T> operator|(ExpressionBuilder<T> const& a, ExpressionBuilder<T> const& b) {
 template <class T>
 star<T> operator*(ExpressionBuilder<T> const& a) {
     return star(a);
+}
+
+template <class T>
+opt<T> operator!(ExpressionBuilder<T> const& a) {
+    return opt(a);
 }

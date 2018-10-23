@@ -1,3 +1,5 @@
+#pragma once
+
 #include "nfanode.hpp"
 
 #include <vector>
