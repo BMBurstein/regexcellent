@@ -18,7 +18,7 @@ public:
     const bool accepts;
     const bool consumes;
 
-    virtual bool test(T const&) const { return true;}
+    virtual bool test(T const&) const { return true; }
 
     StateVec<T> out;
 };

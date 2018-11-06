@@ -14,25 +14,21 @@ public:
     NFAMachine(NFAMachine const&) = delete;
     NFAMachine(NFAMachine &&) = default;
 
-    NFAMachine(NFANode<T> const* s, NodeVec<T> v) : start(std::move(s)), nodes(std::move(v)) {}
+    NFAMachine(NFANode<T> const* s, NodeVec<T> v) : start(std::move(s)), nodes(std::move(v)) {
+        reset();
+    }
+
+    void reset() {
+        next.clear();
+        hasMatch = false;
+        addStates({start});
+    }
 
     template <class InputIt>
     bool run(InputIt begin, InputIt const& end) {
-        StateSet cur, next;
-        
-        next.clear();
-        if(addStates({start}, next)) {
-            return true;
-        }
         while(begin != end) {
-            std::swap(cur, next);
-            next.clear();
-            for(auto const& s: cur) {
-                if(s->test(*begin)) {
-                    if(addStates(s->out, next)) {
-                        return true;
-                    }
-                }
+            if(step(*begin)) {
+                return true;
             }
             ++begin;
         }
@@ -40,24 +36,37 @@ public:
         return false;
     }
 
+    bool step(T const& v) {
+        StateSet cur(std::move(next));
+        next.clear();
+
+        for(auto const& s: cur) {
+            if(s->test(v)) {
+                addStates(s->out);
+            }
+        }
+
+        return hasMatch;
+    }
+
 private:
     using StateSet = std::set<NFANode<T> const*>;
+    StateSet next;
 
-    static bool addStates(StateVec<T> const& states, StateSet& next) {
+    bool hasMatch = false;
+
+    void addStates(StateVec<T> const& states) {
         for(auto const& s: states) {
             if(s->accepts) {
-                return true;
+                hasMatch = true;
             }
             if(s->consumes) {
                 next.emplace(s);
             }
             else {
-                if(addStates(s->out, next)) {
-                    return true;
-                }
+                addStates(s->out);
             }
         }
-        return false;
     }
 
     NFANode<T> const* start;
