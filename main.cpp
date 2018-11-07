@@ -10,7 +10,6 @@ int main(int argc, char* argv[]) {
     auto regex = (*any<char>() + lit('a') + (lit<char>('b') | lit('c')) + !lit('d') + lit('e')).compile();
 
     for(int i=1; i<argc; ++i) {
-        regex.reset();
-        std::cout << argv[i] << ":\t" << regex.run(argv[i], argv[i]+std::strlen(argv[i])) << std::endl;
+        std::cout << argv[i] << ":\t" << regex.match(argv[i], argv[i]+std::strlen(argv[i])) << std::endl;
     }
 }

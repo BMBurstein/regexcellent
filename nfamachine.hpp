@@ -24,20 +24,26 @@ public:
         addStates({start});
     }
 
-    template <class InputIt>
-    bool run(InputIt begin, InputIt const& end) {
+    template <class FwdIt>
+    bool match(FwdIt begin, FwdIt const& end) {
+        reset();
+        FwdIt start;
         while(begin != end) {
+            //addStates({start});
             if(step(*begin)) {
                 return true;
             }
             ++begin;
+            if(next.empty()) {
+                start = begin;
+            }
         }
 
         return false;
     }
 
     bool step(T const& v) {
-        StateSet cur(std::move(next));
+        next.swap(cur);
         next.clear();
 
         for(auto const& s: cur) {
@@ -51,7 +57,7 @@ public:
 
 private:
     using StateSet = std::set<NFANode<T> const*>;
-    StateSet next;
+    StateSet next, cur;
 
     bool hasMatch = false;
 
@@ -71,4 +77,16 @@ private:
 
     NFANode<T> const* start;
     NodeVec<T> nodes;
+
+    // template <class FwdIt>
+    // class MatchResult {
+    // public:
+    //     MatchResult(FwdIt start, FwdIt end, std::size len)
+    //       : start(std::move(start)), end(std::move(end)), len(len)
+    //     {}
+
+    //     FwdIt start;
+    //     FwdIt end;
+    //     std::size_t len;
+    // };
 };
