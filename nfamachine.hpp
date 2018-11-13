@@ -14,69 +14,13 @@ public:
     NFAMachine(NFAMachine const&) = delete;
     NFAMachine(NFAMachine &&) = default;
 
-    NFAMachine(NFANode<T> const* s, NodeVec<T> v) : start(std::move(s)), nodes(std::move(v)) {
-        reset();
-    }
-
-    void reset() {
-        next.clear();
-        hasMatch = false;
-        addStates({start});
-    }
-
-    template <class FwdIt>
-    bool match(FwdIt begin, FwdIt const& end) {
-        reset();
-        FwdIt start;
-        while(begin != end) {
-            //addStates({start});
-            if(step(*begin)) {
-                return true;
-            }
-            ++begin;
-            if(next.empty()) {
-                start = begin;
-            }
-        }
-
-        return false;
-    }
-
-    bool step(T const& v) {
-        next.swap(cur);
-        next.clear();
-
-        for(auto const& s: cur) {
-            if(s->test(v)) {
-                addStates(s->out);
-            }
-        }
-
-        return hasMatch;
-    }
+    NFAMachine(NFANode<T> const* s, NodeVec<T> v) : start(std::move(s)), nodes(std::move(v)) {}
 
 private:
-    using StateSet = std::set<NFANode<T> const*>;
-    StateSet next, cur;
-
-    bool hasMatch = false;
-
-    void addStates(StateVec<T> const& states) {
-        for(auto const& s: states) {
-            if(s->accepts) {
-                hasMatch = true;
-            }
-            if(s->consumes) {
-                next.emplace(s);
-            }
-            else {
-                addStates(s->out);
-            }
-        }
-    }
-
+    
+public:
     NFANode<T> const* start;
-    NodeVec<T> nodes;
+    NodeVec<T> const nodes;
 
     // template <class FwdIt>
     // class MatchResult {
@@ -89,4 +33,6 @@ private:
     //     FwdIt end;
     //     std::size_t len;
     // };
+
+    
 };
