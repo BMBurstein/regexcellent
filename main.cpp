@@ -19,7 +19,7 @@ int main(int argc, char* argv[]) {
     }
     std::cout << std::boolalpha;
 
-    //auto regex = cat( cat( cat( cat( star( any<char>() ), lit('a') ), alt( lit('b'), lit('c') ) ), opt( lit('d') ) ), lit('e') ).compile();
+    //auto regex = cat( cat( cat( lit('a') ), alt( lit('b'), lit('c') ) ), opt( lit('d') ) ), lit('e') ).compile();
     auto regex = (lit<char>('a') + (lit<char>('b') | lit('c')) + !lit('d') + lit('e')).compile();
 
     std::cout << "Search:\n";
