@@ -10,6 +10,7 @@ int main(int argc, char* argv[]) {
         "abe",
         "abcde",
         "acde",
+        "aceace",
         "abaceacabdert"
     };
     if(argc == 1) {
@@ -24,16 +25,16 @@ int main(int argc, char* argv[]) {
     std::cout << "Search:\n";
     for(int i=1; i<argc; ++i) {
         auto res = nfa_search(regex, argv[i], argv[i]+std::strlen(argv[i]));
-        std::cout << argv[i] << " (" << res.size() << "):\n";
+        std::cout << " " << argv[i] << " (" << res.size() << "):\n";
         for(auto it : res) {
             std::cout << "  " << (it.first - argv[i]) << ':' << (it.second - argv[i]) << '\n';
         }
     }
 
-    std::cout << "Match:\n";
+    std::cout << "\nMatch:\n";
     for(int i=1; i<argc; ++i) {
         auto res = nfa_match(regex, argv[i], argv[i]+std::strlen(argv[i]));
-        std::cout << argv[i] << " (" << res.size() << "):\n";
+        std::cout << " " << argv[i] << " (" << res.size() << "):\n";
         for(auto it : res) {
             std::cout << "  " << (it.first - argv[i]) << ':' << (it.second - argv[i]) << '\n';
         }
