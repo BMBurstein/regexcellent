@@ -1,5 +1,6 @@
 #pragma once
 
+#include "nfanode.hpp"
 #include "nfamachine.hpp"
 
 #include <map>
@@ -8,11 +9,21 @@
 template <class T, class FwdIt>
 class NFARunner {
 public:
-    NFARunner(NFAMachine<T> const& m, FwdIt begin, FwdIt const& end) : m(m), begin(begin), end(end) {}
+    NFARunner(NFAMachine<T> const& m, FwdIt begin, FwdIt const& end) : start(m.start), begin(begin), end(end) {}
 
-    auto search() {
+    auto search() { return impl<true>(); }
+    auto match() { return impl<false>(); }
+
+private:
+    template <bool IsSearch>
+    auto impl() {
+        if(!IsSearch) {
+            addStates({ start }, { begin });
+        }
         while(begin != end) {
-            addStates({ m.start }, { begin });
+            if(IsSearch) {
+                addStates({ start }, { begin });
+            }
             next.swap(cur);
             next.clear();
 
@@ -28,7 +39,6 @@ public:
         return matches;
     }
 
-private:
     using StateSet = std::map<NFANode<T> const*, std::vector<FwdIt>>;
     StateSet next, cur;
 
@@ -50,7 +60,17 @@ private:
         }
     }
 
-    NFAMachine<T> const& m;
+    NFANode<T> const* start;
     FwdIt begin;
     FwdIt const& end;
 };
+
+template <class T, class FwdIt>
+auto nfa_search(NFAMachine<T> const& m, FwdIt begin, FwdIt const& end) {
+    return NFARunner(m, begin, end).search();
+}
+
+template <class T, class FwdIt>
+auto nfa_match(NFAMachine<T> const& m, FwdIt begin, FwdIt const& end) {
+    return NFARunner(m, begin, end).match();
+}

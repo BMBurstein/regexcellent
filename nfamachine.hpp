@@ -16,23 +16,8 @@ public:
 
     NFAMachine(NFANode<T> const* s, NodeVec<T> v) : start(std::move(s)), nodes(std::move(v)) {}
 
-private:
-    
-public:
     NFANode<T> const* start;
+
+private:
     NodeVec<T> const nodes;
-
-    // template <class FwdIt>
-    // class MatchResult {
-    // public:
-    //     MatchResult(FwdIt start, FwdIt end, std::size len)
-    //       : start(std::move(start)), end(std::move(end)), len(len)
-    //     {}
-
-    //     FwdIt start;
-    //     FwdIt end;
-    //     std::size_t len;
-    // };
-
-    
 };
